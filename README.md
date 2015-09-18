@@ -20,7 +20,7 @@ To test it out:
   jekyll serve
   ```
   
-Running Jekyll 2.5.3 on my mac, build times average around 38 seconds,
+Running Jekyll 2.5.3 on my mac, build times hover around 30-35 seconds,
 and changes to any of the `_data` trigger a complete rebuild when you're
 running the watching server. That's a long time to wait when you're
 testing!
