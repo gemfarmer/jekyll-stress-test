@@ -3,6 +3,9 @@ layout: base
 ---
 <h1>Resource Page</h1>
 
+<h2>{{ page.resource|jsonify }}</h2>
+<h2>{{ page.datatype|jsonify }}</h2>
+
 <form>
 
   <div>
@@ -20,7 +23,7 @@ layout: base
     <select id="select-resource" name="resource"
       is="url-selector" replace="{{ page.resource.slug }}">
       {% for resource in site.data.resources %}
-      <option value="{{ resource.slug }}"{% if page.resource.slug == resource.slug %} selected{% endif %}>{{ resource.name }}</option>
+      <option value="{{ resource.slug }}"{% if page.resource.slug == resource.slug %} selected{% endif %}>{{ resource.name|escape }}</option>
       {% endfor %}
     </select>
   </div>
@@ -37,7 +40,7 @@ layout: base
       </optgroup>
       <optgroup label="Offshore Areas">
         {% for area in site.data.offshore_areas %}
-        <option value="offshore/{{ area.slug }}"{% if page.area.slug == area.slug %} selected{% endif %}>{{ area.name }}</option>
+        <option value="offshore/{{ area.slug }}"{% if page.area.slug == area.slug %} selected{% endif %}>{{ area.name|escape }}</option>
         {% endfor %}
       </optgroup>
     </select>
