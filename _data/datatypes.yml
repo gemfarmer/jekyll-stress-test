@@ -1,0 +1,26 @@
+- name: Revenue
+  slug: revenue
+  geo:
+    - us
+    - states
+    - counties
+    - offshore
+
+- name: Production
+  slug: production
+  geo:
+    - us
+    - states
+    - counties
+    - offshore
+
+- name: Exports
+  slug: exports
+  geo:
+    - states
+
+- name: Jobs
+  slug: jobs
+  geo:
+    - us
+    - states

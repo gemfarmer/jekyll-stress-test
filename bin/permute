@@ -1,0 +1,196 @@
+#!/usr/bin/env node
+var yargs = require('yargs')
+  .usage('$0 [options] -o path')
+  .describe('by', 'A dimension in the data matrix, in the form "alias=source"')
+  .describe('o', 'The output file tempate, with ":alias" placeholders')
+  .demand(['by', 'o'])
+  .alias('h', 'help');
+
+var options = yargs.argv;
+if (options.help) {
+  return yargs.showHelp();
+}
+
+var loadData = require('data-directory');
+var dotmap = require('dotmap');
+var async = require('async');
+var permutron = require('permutron');
+var extend = require('extend');
+var mkdirp = require('mkdirp');
+var yaml = require('js-yaml');
+var path = require('path');
+var fs = require('fs');
+var qs = require('querystring');
+
+var by = coerceArray(options.by);
+var pathTemplate = options.o;
+
+var SLUG = 'slug';
+
+var defaults = coerceArray(options.set).reduce(function(map, expr) {
+  var parts = expr.split('=');
+  if (parts.length !== 2) {
+    throw new Error('Invalid --set expression: "' + expr + '"; expected form "key=value"');
+  }
+  map[parts[0]] = parts[1];
+  return map;
+}, {});
+
+async.waterfall([
+  loadData,
+
+  function getDimensions(data, done) {
+    // console.warn('getting dimensions for data:', data);
+    var dimensions = by.map(function(field) {
+      field = qualifyField(field);
+      var d = dotmap.get(data, field.key);
+      if (field.filter) d = applyFilter(d, field.filter);
+      return {
+        name: field.name,
+        data: d
+      };
+    });
+    done(null, dimensions);
+  },
+
+  function permute(dimensions, done) {
+    // console.warn('permuting dimensions:', dimensions);
+    var set = [];
+    var keys = dimensions.map(function(dim) {
+      return dim.name;
+    });
+    var data = dimensions.map(function(dim) {
+      return dim.data;
+    });
+    var args = data.concat(
+      function iterator() {
+        var values = [].slice.call(arguments);
+        var cb = values.pop();
+        var entry = {};
+        values.forEach(function(v, i) {
+          entry[keys[i]] = v;
+        });
+        set.push(entry);
+        cb();
+      },
+      function() {
+        done(null, set);
+      }
+    );
+    permutron.apply(null, args);
+  },
+
+  function createFiles(data, done) {
+    // console.warn('creating files:', data[0]);
+    async.mapSeries(data, createFile, done);
+  }
+], function(error, files) {
+  if (error) return console.error('ERROR:', error);
+  console.warn('created %d files.', files.length);
+});
+
+function createFile(data, done) {
+  data = extend({}, defaults, data);
+  var file = pathTemplate.replace(/:(\w+)/g, function(_, key) {
+    var d = data[key];
+    if (!d) {
+      throw new Error('Missing data key: "' + key + '" in: ' + JSON.stringify(data));
+    } else if (typeof d === 'string') {
+      return d;
+    } else if (!(SLUG in d)) {
+      throw new Error('Missing slug ("' + SLUG + '") in: ' + JSON.stringify(d));
+    }
+    return d[SLUG];
+  });
+
+  console.warn('writing: %s ...', file);
+  async.series([
+    function mkdir(next) {
+      var dir = path.dirname(file);
+      mkdirp(dir, next);
+    },
+    function write(next) {
+      var stream = fs.createWriteStream(file, 'utf8');
+      writeDataToStream(data, stream, next);
+    }
+  ], function(error) {
+    done(error, {data: data, path: file});
+  });
+}
+
+function writeDataToStream(data, stream, done) {
+  stream.write('---\n');
+  stream.write(yaml.safeDump(data));
+  stream.write('---\n');
+  stream.end(done);
+}
+
+function applyFilter(obj, filter) {
+  if (!Array.isArray(obj)) {
+    obj = Object.keys(obj)
+      .map(function(key) {
+        return {
+          key: key,
+          value: obj[key]
+        };
+      });
+  }
+  return obj.filter(filter);
+}
+
+function qualifyField(field) {
+  var filter;
+  var q = field.indexOf('?');
+  if (q > -1) {
+    var query = qs.parse(field.substr(q + 1));
+    field = field.substr(0, q);
+    console.log('field:', field);
+    filter = createFilter(query);
+  }
+  var eq = field.indexOf('=');
+  if (eq > -1) {
+    return {
+      name: field.substr(0, eq),
+      key: field.substr(eq + 1),
+      filter: filter
+    };
+  }
+  return {
+    name: field,
+    key: field,
+    filter: filter
+  };
+}
+
+function createFilter(query) {
+  for (var k in query) {
+    switch (query[k]) {
+      case 'true':
+      case '':
+        query[k] = true;
+        break;
+      case 'false':
+        query[k] = false;
+        break;
+      case 'null':
+        query[k] = null;
+        break;
+      case 'undefined':
+        query[k] = undefined;
+        break;
+    }
+  }
+
+  console.warn('got filter query:', query);
+  return function(d) {
+    for (var k in query) {
+      if (d[k] != query[k]) return false;
+    }
+    return true;
+  };
+}
+
+function coerceArray(d) {
+  if (d === null || d === undefined || !d.length) return [];
+  return Array.isArray(d) ? d : [d];
+}

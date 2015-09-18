@@ -1,0 +1,7 @@
+title: EITI
+
+exclude:
+  - bin
+  - node_modules
+  - package.json
+  - '**/Makefile'

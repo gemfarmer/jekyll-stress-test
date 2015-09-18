@@ -1,0 +1,28 @@
+name,slug,region
+Chukchi Sea,CHU,Alaska
+Cook Inlet,COK,Alaska
+St. George Basin,GEO,Alaska
+Gulf of Alaska,GOA,Alaska
+Hope Basin,HOP,Alaska
+Kodiak,KOD,Alaska
+St. Matthew-Hall,MAT,Alaska
+North Aleutian Basin,NAL,Alaska
+Navarin Basin,NAV,Alaska
+Norton Basin,NOR,Alaska
+Shumagin,SHU,Alaska
+Florida Straits,FLS,Atlantic
+Mid Atlantic,MDA,Atlantic
+North Atlantic,NOA,Atlantic
+South Atlantic,SOA,Atlantic
+Gulf,GUL,Gulf
+Aleutian Arc,ALA,Gulf
+Aleutian Basin,ALB,Gulf
+Beaufort Sea,BFT,Gulf
+Bowers Basin,BOW,Gulf
+Central Gulf of Mexico,CGM,Gulf
+Eastern Gulf of Mexico,EGM,Gulf
+Western Gulf of Mexico,WGM,Gulf
+Central California,CEC,Pacific
+Northern California,NOC,Pacific
+Southern California,SOC,Pacific
+Washington-Oregon,WAO,Pacific

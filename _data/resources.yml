@@ -1,0 +1,17 @@
+- slug: all
+  name: All Resources
+  superset: true
+  offshore: true
+
+- slug: oilgas
+  name: Oil & Gas
+  offshore: true
+
+- slug: coal
+  name: Coal
+
+- slug: minerals
+  name: Minerals
+
+- slug: renewables
+  name: Renewables
