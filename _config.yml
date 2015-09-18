@@ -4,4 +4,6 @@ exclude:
   - bin
   - node_modules
   - package.json
-  - '**/Makefile'
+  - LICENSE
+  - Makefile
+  - README.md
