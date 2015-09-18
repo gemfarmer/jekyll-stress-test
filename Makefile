@@ -1,6 +1,33 @@
 all: \
 	resource-pages
 
+build:
+	time jekyll build
+
+_resources:
+	bin/permute \
+		--by resource=resources \
+		-o $@/:resource.md
+
+_states:
+	bin/permute \
+		--by state=states \
+		-o _$@/:state.md
+
+_offshore:
+	bin/permute \
+		--by area=offshore_areas \
+		-o $@/:area.md
+
+_revenue-resources: _resources
+	ln -s $< $@
+
+_revenue_all_states: _states
+	ln -s $< $@
+
+_revenue_all_offshore: _offshore
+	ln -s $< $@
+
 resource-pages: \
 	resource-indexes \
 	us-resources \
