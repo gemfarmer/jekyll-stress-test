@@ -1,5 +1,46 @@
 title: EITI
 
+collections:
+
+  revenue_resources:
+    output: true
+    permalink: /resource/:path/revenue/
+
+  revenue_all_states:
+    output: true
+    permalink: /resource/all/revenue/onshore/:path/
+
+  revenue_all_offshore:
+    output: true
+    permalink: /resource/all/revenue/offshore/:path/
+
+defaults:
+  - scope:
+      path: resource
+    values:
+      layout: resource
+  - scope:
+      path: ''
+      type: revenue_resources
+    values:
+      datatype:
+        slug: revenue
+        name: Revenue
+  - scope:
+      path: ''
+      type: revenue_all_states
+    values:
+      datatype:
+        slug: revenue
+        name: Revenue
+  - scope:
+      path: ''
+      type: revenue_all_offshore
+    values:
+      datatype:
+        slug: revenue
+        name: Revenue
+
 exclude:
   - bin
   - node_modules
