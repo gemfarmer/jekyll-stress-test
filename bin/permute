@@ -107,7 +107,11 @@ function createFile(data, done) {
   async.series([
     function mkdir(next) {
       var dir = path.dirname(file);
-      mkdirp(dir, next);
+      if (dir) {
+        mkdirp(dir, next);
+      } else {
+        next();
+      }
     },
     function write(next) {
       var stream = fs.createWriteStream(file, 'utf8');
