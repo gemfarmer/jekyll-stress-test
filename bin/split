@@ -1,0 +1,82 @@
+#!/usr/bin/env node
+var yargs = require('yargs')
+  .usage('$0 [options] -o path')
+  .demand(['o'])
+  .describe('o', 'The output file tempate, with ":key" placeholders')
+  .describe('if', 'The input data format, per tito')
+  .default('if', 'csv')
+  .describe('of', 'The output data format, per tito')
+  .default('of', 'csv')
+  .alias('h', 'help');
+
+var options = yargs.argv;
+var args = options._;
+if (options.help || (!args.length && !options.if)) {
+  return yargs.showHelp();
+}
+
+var fs = require('fs');
+var tito = require('tito');
+var mkdirp = require('mkdirp');
+var async = require('async');
+var path = require('path');
+var streamify = require('stream-array');
+
+var input = args.length ? args[0] : '/dev/stdin';
+var format = options.if || input.split('.').pop();
+
+var groups = {};
+var pathTemplate = options.o;
+var getFilename = function(d) {
+  return pathTemplate.replace(/{([^}]+)}/g, function(_, k) {
+    return d[k];
+  });
+};
+
+const MAX_PARALLEL = 100;
+
+fs.createReadStream(input, 'utf8')
+  .pipe(tito.createReadStream(format))
+  .on('data', function(d) {
+    var filename = getFilename(d);
+    if (!filename) {
+      console.warn('no key for:', d);
+      return;
+    }
+    if (filename in groups) {
+      groups[filename].push(d);
+    } else {
+      groups[filename] = [d];
+    }
+  })
+  .on('end', writeFiles);
+
+function writeFiles() {
+  var filenames = Object.keys(groups);
+  console.warn('writing %d filenames...', filenames.length);
+  async.mapLimit(filenames, MAX_PARALLEL, function write(filename, next) {
+    var data = groups[filename];
+    // console.warn('%s (%d rows)', filename, data.length);
+    var dir = path.dirname(filename);
+    if (dir) {
+      mkdirp(dir, function(error) {
+        if (error) return next(error);
+        writeDataFile(data, filename, next);
+      });
+    } else {
+      writeDataFile(data, filename, next);
+    }
+  }, function(error) {
+    if (error) return console.warn('error:', error);
+    console.warn('wrote %d files.', filenames.length);
+  });
+}
+
+function writeDataFile(data, filename, done) {
+  console.warn('writing %d rows to:', data.length, filename);
+  var format = options.of || filename.split('.').pop();
+  streamify(data)
+    .pipe(tito.createWriteStream(format))
+    .pipe(fs.createWriteStream(filename, 'utf8'))
+    .on('close', done);
+}
